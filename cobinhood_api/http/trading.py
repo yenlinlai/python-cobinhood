@@ -1,4 +1,5 @@
 """ trading """
+import json
 import time
 import requests
 from cobinhood_api.common import logger
@@ -32,9 +33,15 @@ class Trading(object):
         req = requests.post('%s/orders' % (self.BASE_URL),
                             json=data,
                             headers=self.header)
-        if self.config.DEV:
-            return req.json(), req.elapsed.total_seconds()
-        return req.json()
+        try:
+            if self.config.DEV:
+                return json.loads(req.text), req.elapsed.total_seconds()
+            return json.loads(req.text)
+        except json.JSONDecodeError as e:
+            msg = 'captured json error {}\n'.format(e)
+            msg += 'text content:\n{}'.format(req.text)
+            logger.error(msg)
+            raise e
 
     @logger(obj=__name__)
     def put_orders(self, order_id, data):
@@ -68,9 +75,15 @@ class Trading(object):
         self.header['nonce'] = str(int(float(time.time()) * 1000))
         req = requests.delete('%s/orders/%s' % (self.BASE_URL, order_id),
                               headers=self.header)
-        if self.config.DEV:
-            return req.json(), req.elapsed.total_seconds()
-        return req.json()
+        try:
+            if self.config.DEV:
+                return json.loads(req.text), req.elapsed.total_seconds()
+            return json.loads(req.text)
+        except json.JSONDecodeError as e:
+            msg = 'captured json error {}\n'.format(e)
+            msg += 'text content:\n{}'.format(req.text)
+            logger.error(msg)
+            raise e
 
     @logger(obj=__name__)
     def get_order_history(self, **parameter):
